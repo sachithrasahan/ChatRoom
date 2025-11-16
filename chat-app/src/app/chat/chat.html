@@ -1,0 +1,144 @@
+<div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
+  <h1 class="text-2xl font-bold text-center mb-2">💬 SignalR Chat</h1>
+  <p class="text-gray-500 text-center mb-4">Real-time chat application with room support</p>
+
+  <!-- Connection status (left-aligned now) -->
+  <div
+    class="p-2 text-sm rounded-md mb-4 font-medium flex items-center"
+    [ngClass]="
+      (signalR.connectionState$ | async) === 'Connected'
+        ? 'bg-green-100 text-green-700'
+        : 'bg-red-100 text-red-700'
+    "
+  >
+    <span class="ml-2">
+      {{ (signalR.connectionState$ | async) === 'Connected' ? '🟢 Connected' : '🔴 Disconnected' }}
+    </span>
+  </div>
+
+  <!-- Join Section -->
+  <div *ngIf="!username" class="space-y-3">
+    <input
+      [(ngModel)]="tempName"
+      placeholder="Enter your name"
+      class="border border-gray-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <button
+      (click)="join()"
+      class="bg-blue-600 text-white py-2 rounded-lg w-full hover:bg-blue-700 transition"
+    >
+      Join Chat
+    </button>
+  </div>
+
+  <!-- Chat Section -->
+  <div *ngIf="username" class="flex flex-col h-[550px]">
+    <!-- Header -->
+    <div
+      class="flex justify-between items-center mb-3 bg-gray-50 p-3 rounded-md border border-gray-200"
+    >
+      <div>
+        <div class="font-semibold text-gray-800">
+          Room: <span class="text-blue-600 cursor-pointer">Chat Room</span>
+        </div>
+        <div class="text-sm text-gray-500">
+          Logged in as: <strong>{{ username }}</strong>
+        </div>
+      </div>
+
+      <button
+        (click)="leave()"
+        class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+      >
+        Leave Room
+      </button>
+    </div>
+
+    <!-- Chat messages -->
+    <div class="flex-1 border rounded-lg p-3 bg-gray-50 overflow-y-auto space-y-4" id="chat-box">
+      <div *ngFor="let msg of messages">
+        <!-- System message -->
+        <div *ngIf="msg.user === 'System'" class="text-center">
+          <span
+            class="bg-green-100 text-green-700 text-sm italic rounded-lg py-1 px-3 inline-block mx-auto"
+          >
+            {{ msg.message }}
+          </span>
+        </div>
+
+        <!-- My message -->
+        <div *ngIf="msg.user === username && msg.user !== 'System'" class="flex justify-end mb-3">
+          <div class="flex items-end space-x-2">
+            <div class="bg-blue-200 text-gray-800 rounded-2xl px-4 py-2 max-w-md shadow-sm">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-semibold text-sm text-blue-700">{{ msg.user }}</span>
+                <span class="text-xs text-gray-500">{{ msg.time | date : 'shortTime' }}</span>
+              </div>
+              <div class="text-sm break-words">{{ msg.message }}</div>
+            </div>
+            <div
+              class="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-sm"
+            >
+              {{ msg.user[0] | uppercase }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Other user's message -->
+        <div
+          *ngIf="msg.user !== username && msg.user !== 'System'"
+          class="flex justify-start items-start"
+        >
+          <div class="flex items-center space-x-2 max-w-[75%]">
+            <div
+              class="flex-shrink-0 w-9 h-9 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-semibold"
+            >
+              {{ msg.user[0] | uppercase }}
+            </div>
+            <div class="bg-gray-200 text-gray-800 px-4 py-3 rounded-2xl shadow-sm w-full">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-semibold text-sm text-gray-700">{{ msg.user }}</span>
+                <span class="text-xs text-gray-500">{{ msg.time | date : 'shortTime' }}</span>
+              </div>
+              <div class="text-sm text-gray-800 break-words">
+                {{ msg.message }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div
+      *ngIf="typingUsers.length > 0"
+      class="flex items-center space-x-2 text-sm text-gray-500 mt-2 italic px-1 h-6"
+    >
+      <div class="flex space-x-1">
+        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+      </div>
+      <span>
+        {{ typingUsers.join(', ') }} {{ typingUsers.length > 1 ? 'are' : 'is' }} typing...
+      </span>
+    </div>
+
+    <!-- Input area -->
+    <div class="flex mt-3">
+      <input
+        [(ngModel)]="message"
+        (keydown.enter)="onEnterPress($event)"
+        (input)="onTypingStart()"
+        placeholder="Type your message..."
+        class="border border-gray-300 p-2 flex-grow rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button
+        (click)="send()"
+        class="bg-blue-600 text-white px-5 rounded-r-lg hover:bg-blue-700 transition"
+      >
+        Send
+      </button>
+    </div>
+  </div>
+</div>
